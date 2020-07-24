@@ -1,11 +1,13 @@
+import os
 import torch
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
-from torchvision4ad.datasets import MVTecAD
+from torchvision import datasets
 
 from fanogan.save_compared_images import save_compared_images
 
 from model import Generator, Encoder
+from tools import MVTecAD, MVTECAD_DATASET_NAMES
 
 
 def main(opt):
@@ -13,14 +15,20 @@ def main(opt):
         torch.manual_seed(opt.seed)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-    transform = transforms.Compose([transforms.Resize([opt.img_size]*2),
-                                    transforms.RandomHorizontalFlip(),
-                                    transforms.ToTensor(),
-                                    transforms.Normalize([0.5, 0.5, 0.5],
-                                                         [0.5, 0.5, 0.5])])
-    mvtec_ad = MVTecAD(".", opt.dataset_name, train=False, transform=transform,
-                       download=True)
-    test_dataloader = DataLoader(mvtec_ad, batch_size=opt.n_grid_lines,
+    mvtec_ad = MVTecAD()
+
+    if not os.path.isdir(opt.dataset_name) or opt.force_download:
+        mvtec_ad.download(opt.dataset_name)
+        mvtec_ad.extract(opt.dataset_name)
+
+    images = datasets.ImageFolder(f"./{opt.dataset_name}/test",
+                                  transform=transforms.Compose(
+                                    [transforms.Resize([opt.img_size]*2),
+                                     transforms.RandomHorizontalFlip(),
+                                     transforms.ToTensor(),
+                                     transforms.Normalize([0.5, 0.5, 0.5],
+                                                          [0.5, 0.5, 0.5])]))
+    test_dataloader = DataLoader(images, batch_size=opt.n_grid_lines,
                                  shuffle=False)
 
     generator = Generator(opt)
@@ -43,7 +51,7 @@ if __name__ == "__main__":
     parser.add_argument("--n_grid_lines", type=int, default=10,
                         help="number of grid lines in the saved image")
     parser.add_argument("dataset_name", type=str,
-                        choices=MVTecAD.available_dataset_names,
+                        choices=MVTECAD_DATASET_NAMES,
                         help="name of MVTec Anomaly Detection Datasets")
     parser.add_argument("--force_download", "-f", action="store_true",
                         help="flag of force download")
