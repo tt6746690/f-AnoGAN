@@ -1,0 +1,14 @@
+.ipynb_checkpoints/
+
+# python 
+build/
+dist/
+fanogan.egg-info/
+__pycache__/
+
+# data
+mnist/dataset/
+
+# results
+mnist/results/
+

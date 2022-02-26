@@ -56,8 +56,12 @@ def train_encoder_izif(opt, generator, discriminator, encoder,
             fake_features = discriminator.forward_features(fake_imgs)
 
             # izif architecture
+            
+            # 1/n* ||x-G(E(x))||^2
             loss_imgs = criterion(fake_imgs, real_imgs)
+            # 1/nd*||f(x)-f(G(E(x)))||^2 where f stands for discriminator features.
             loss_features = criterion(fake_features, real_features)
+            #
             e_loss = loss_imgs + kappa * loss_features
 
             e_loss.backward()
